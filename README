@@ -1,0 +1,44 @@
+# meta-lastandfast
+
+Lastandfast custom Yocto layer for the INAR robotic arm.
+Target: NVIDIA Jetson Orin Nano (jetson-orin-nano-devkit)
+
+## Partition Layout
+
+| Partition | Mount | Type | Mode |
+|-----------|-------|------|------|
+| mmcblk0p1 | / (slot A) | ext4 | read-only |
+| mmcblk0p2 | / (slot B) | ext4 | read-only |
+| mmcblk0p3 | /data | ext4 | read-write |
+
+## OTA Strategy
+
+A/B partition scheme. Active slot selected by bootloader (CBoot/U-Boot).
+Updates written to inactive slot. Rollback automatic on boot failure.
+/etc/fstab uses /dev/root (bootloader-resolved) not hardcoded partition.
+
+## Build Instructions
+
+1. Install Yocto dependencies (Ubuntu 22.04)
+2. Clone layers:
+   - poky (scarthgap)
+   - meta-openembedded (scarthgap)
+   - meta-tegra (scarthgap)
+   - meta-lastandfast (this repo)
+3. source poky/oe-init-build-env build
+4. bitbake core-image-minimal
+
+## Flash Instructions
+
+cd build/tmp/deploy/images/jetson-orin-nano-devkit
+tar xf core-image-minimal-jetson-orin-nano-devkit.rootfs.tegraflash.tar.gz
+sudo ./doflash.sh
+
+## Adding a New Machine Target (e.g. Orin NX)
+
+In conf/local.conf change:
+MACHINE = "jetson-orin-nano-devkit"
+to:
+MACHINE = "jetson-orin-nx-devkit"
+
+All recipes in meta-lastandfast are machine-agnostic and will work unchanged.

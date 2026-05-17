@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=Lastandfast
+Description=Lastandfast OS boot splash
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/lastandfast
+ScriptFile=/usr/share/plymouth/themes/lastandfast/lastandfast.script

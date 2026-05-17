@@ -1,0 +1,12 @@
+[Unit]
+Description=Lastandfast Hardware Watchdog
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/sbin/watchdog -F -c /etc/watchdog.conf
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
