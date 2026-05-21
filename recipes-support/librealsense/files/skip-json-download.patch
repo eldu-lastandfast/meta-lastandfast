@@ -1,0 +1,8 @@
+--- a/CMake/external_json.cmake
++++ b/CMake/external_json.cmake
+@@ -1,4 +1,4 @@
+ cmake_minimum_required(VERSION 3.6)
+ include(ExternalProject)
+ function(get_nlohmann_json)
+-    message( STATUS
++    message( STATUS "Using pre-supplied nlohmann/json" )
