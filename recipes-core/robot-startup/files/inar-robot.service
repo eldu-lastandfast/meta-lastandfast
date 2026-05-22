@@ -1,0 +1,16 @@
+[Unit]
+Description=INAR Robot Stack
+After=network.target
+
+[Service]
+Type=simple
+User=inari
+Environment="ROS_DOMAIN_ID=0"
+Environment="RMW_IMPLEMENTATION=rmw_fastrtps_cpp"
+ExecStartPre=/bin/bash -c "source /opt/ros/humble/setup.bash"
+ExecStart=/bin/bash -c "source /opt/ros/humble/setup.bash && ros2 launch inar_bringup robot.launch.py"
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
