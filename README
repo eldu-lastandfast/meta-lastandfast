@@ -1,15 +1,32 @@
 # meta-lastandfast
 
 Lastandfast custom Yocto layer for the INAR robotic arm.
-Target: NVIDIA Jetson Orin Nano (jetson-orin-nano-devkit)
+Target: NVIDIA Jetson Orin Nano 8GB (jetson-orin-nano-devkit-nvme)
+
+## Hardware
+
+- Board: NVIDIA Jetson Orin Nano 8GB Developer Kit
+- Module: P3767-0003
+- Carrier: P3768-0000
+- Storage: NVMe SSD (M.2 2242)
+
+## Software Stack
+
+- OS: Lastandfast OS 1.0
+- ROS 2: Humble
+- CUDA: 12.6
+- TensorRT: 10.3.0
+- cuDNN: 9.3.0
+- Cameras: Intel RealSense D435 (librealsense2), Orbbec Gemini 336L (OrbbecSDK)
+- Python: 3.12 + NumPy + OpenCV
 
 ## Partition Layout
 
 | Partition | Mount | Type | Mode |
 |-----------|-------|------|------|
-| mmcblk0p1 | / (slot A) | ext4 | read-only |
-| mmcblk0p2 | / (slot B) | ext4 | read-only |
-| mmcblk0p3 | /data | ext4 | read-write |
+| NVMe slot A | / (slot A) | ext4 | read-only |
+| NVMe slot B | / (slot B) | ext4 | read-only |
+| /data | /data | ext4 | read-write |
 
 ## OTA Strategy
 
@@ -19,26 +36,75 @@ Updates written to inactive slot. Rollback automatic on boot failure.
 
 ## Build Instructions
 
-1. Install Yocto dependencies (Ubuntu 22.04)
+1. Install Yocto dependencies on Ubuntu 22.04:
+   sudo apt install -y gawk wget git diffstat unzip texinfo gcc build-essential chrpath socat cpio python3 python3-pip python3-pexpect xz-utils debianutils iputils-ping python3-git python3-jinja2 python3-subunit zstd liblz4-tool file locales libacl1 gfortran
+
 2. Clone layers:
-   - poky (scarthgap)
-   - meta-openembedded (scarthgap)
-   - meta-tegra (scarthgap)
-   - meta-lastandfast (this repo)
-3. source poky/oe-init-build-env build
-4. bitbake core-image-minimal
+   mkdir -p ~/lastandfast && cd ~/lastandfast
+   git clone -b scarthgap https://git.yoctoproject.org/poky.git
+   git clone -b scarthgap https://github.com/OE4T/meta-tegra.git
+   git clone -b scarthgap https://github.com/openembedded/meta-openembedded.git
+   git clone -b scarthgap https://github.com/ros/meta-ros.git
+   git clone https://github.com/eldu-lastandfast/meta-lastandfast.git
+
+3. Initialize build environment:
+   source poky/oe-init-build-env build
+
+4. Add layers:
+   bitbake-layers add-layer ~/lastandfast/meta-openembedded/meta-oe
+   bitbake-layers add-layer ~/lastandfast/meta-openembedded/meta-python
+   bitbake-layers add-layer ~/lastandfast/meta-openembedded/meta-networking
+   bitbake-layers add-layer ~/lastandfast/meta-openembedded/meta-initramfs
+   bitbake-layers add-layer ~/lastandfast/meta-tegra
+   bitbake-layers add-layer ~/lastandfast/meta-lastandfast
+   bitbake-layers add-layer ~/lastandfast/meta-ros/meta-ros-common
+   bitbake-layers add-layer ~/lastandfast/meta-ros/meta-ros2
+   bitbake-layers add-layer ~/lastandfast/meta-ros/meta-ros2-humble
+
+5. Configure local.conf:
+   MACHINE = "jetson-orin-nano-devkit-nvme"
+   ROS_DISTRO = "humble"
+   ROS_OE_RELEASE_SERIES = "scarthgap"
+   LICENSE_FLAGS_ACCEPTED = "commercial_cuda-binaries nvidia-sdk"
+   IMAGE_INSTALL:append = " base-files lastandfast-users plymouth-lastandfast lastandfast-watchdog lastandfast-journald cuda-libraries cuda-cudart tensorrt-core cudnn ros-base librealsense2 orbbec-sdk python3-numpy python3-opencv inar-robot"
+
+6. Build:
+   bitbake core-image-minimal
 
 ## Flash Instructions
 
-cd build/tmp/deploy/images/jetson-orin-nano-devkit
-tar xf core-image-minimal-jetson-orin-nano-devkit.rootfs.tegraflash.tar.gz
-sudo ./doflash.sh
+1. Install device-tree-compiler:
+   sudo apt install -y device-tree-compiler
+
+2. Put Jetson into recovery mode:
+   - Unplug power
+   - Short FC REC to GND
+   - Plug power back in
+   - Wait 2 seconds, remove jumper
+   - Connect USB cable to PC
+
+3. Attach USB to WSL:
+   usbipd bind --busid X-X
+   usbipd attach --wsl --busid X-X
+
+4. Flash:
+   cd ~/lastandfast/build/tmp/deploy/images/jetson-orin-nano-devkit-nvme
+   tar xf core-image-minimal-jetson-orin-nano-devkit-nvme.rootfs.tegraflash.tar.gz
+   sudo ./doflash.sh
 
 ## Adding a New Machine Target (e.g. Orin NX)
 
 In conf/local.conf change:
-MACHINE = "jetson-orin-nano-devkit"
+MACHINE = "jetson-orin-nano-devkit-nvme"
 to:
 MACHINE = "jetson-orin-nx-devkit"
 
 All recipes in meta-lastandfast are machine-agnostic and will work unchanged.
+
+## Branding
+
+- Hostname: inari
+- Default user: inari
+- OS name: Lastandfast OS 1.0 (INAR)
+- Boot splash: Lastandfast Plymouth theme
+- Shell prompt: [lastandfast@inari]
