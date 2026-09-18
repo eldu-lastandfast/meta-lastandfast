@@ -5,8 +5,8 @@ Target: NVIDIA Jetson Orin Nano 8GB (jetson-orin-nano-devkit-nvme)
 
 ## Hardware
 
-- Board: NVIDIA Jetson Orin Nano 8GB Developer Kit
-- Module: P3767-0003
+- Board: NVIDIA Jetson Orin Nano 8GB Developer Kit Super
+- Module: P3767-0005
 - Carrier: P3768-0000
 - Storage: NVMe SSD (M.2 2242)
 
